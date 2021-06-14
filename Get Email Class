@@ -1,0 +1,43 @@
+class GET_MAIL():
+    def __init__(self, mail):
+        
+        self.mail = mail #It's just imaplib.IMAP4_SSL('imap.gmail.com')
+
+        self.email_file = codecs.open('email.txt', 'r')
+        self.password_file = codecs.open('password.txt', 'r')
+
+        self.read_email_file = str(self.email_file.read())
+        self.read_password_file = str(self.password_file.read())
+        #OR
+        #self.read_email_file = "YOURMAIL@GMAIL.COM"
+        #self.read_password_file = "YOURPASSWORD"
+        (self.retcode, self.capabilities) = self.mail.login(self.read_email_file, self.read_password_file)
+
+    def get_mail_func(self):
+        while True:
+            self.mail.list()
+            self.mail.select('inbox')
+            (retcode, messages) = self.mail.search(None, '(UNSEEN)')
+            if retcode == 'OK':
+                for num in messages[0].split():
+                    typ, data = self.mail.fetch(num,'(RFC822)')
+                    for response_part in data:
+                        if isinstance(response_part, tuple):
+                            original = email.message_from_bytes(response_part[1])
+                            raw_email = data[0][1]
+                            raw_email_string = raw_email.decode('utf-8')
+                            email_message = email.message_from_string(raw_email_string)
+                            typ, data = self.mail.store(num,'+FLAGS','\\Seen')
+                            
+
+                            if email_message.is_multipart():
+                                for payload in email_message.get_payload():
+                                    body = payload.get_payload(decode=True).decode('utf-8')
+                                    print(original['From'])#SENDER'S MAIL
+                                    print(body)#MESSAGE
+
+                        
+                            else:    
+                                body = email_message.get_payload(decode=True).decode('utf-8')
+                                print(original['From'])#SENDER'S MAIL
+                                print(body)#MESSAGE   
